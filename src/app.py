@@ -168,6 +168,53 @@ def pagina_extraccion():
                 
                 if not df.empty:
                     st.success(f"✅ Se extrajeron {len(df)} documentos exitosamente")
+                    
+                    # Verificar si hay categorías
+                    if 'categoria' not in df.columns:
+                        st.warning("""
+                        ⚠️ **Nota importante:** Los datos extraídos no tienen categorías asignadas.
+                        """)
+                        
+                        # NUEVO: Botón de categorización automática
+                        st.info("""
+                        💡 **¡Prueba la categorización automática!**
+                        
+                        Usa inteligencia artificial para identificar automáticamente 
+                        las categorías de tus documentos sin necesidad de etiquetarlos manualmente.
+                        """)
+                        
+                        col1, col2 = st.columns([1, 3])
+                        with col1:
+                            if st.button("🤖 Categorizar Automáticamente", type="primary"):
+                                with st.spinner("Analizando contenido y detectando categorías..."):
+                                    from categorizador_auto import CategorizadorAutomatico
+                                    from preprocessing import PreprocesadorTexto
+                                    
+                                    # Preprocesar si no está ya procesado
+                                    if 'texto_procesado' not in df.columns:
+                                        prep = PreprocesadorTexto()
+                                        df['texto_procesado'] = df['texto'].apply(prep.procesar_texto)
+                                    
+                                    # Categorizar
+                                    categorizador = CategorizadorAutomatico()
+                                    df = categorizador.analizar_y_categorizar(df)
+                                    
+                                    # Renombrar columna
+                                    df['categoria'] = df['categoria_auto']
+                                    
+                                    # Actualizar en session state
+                                    st.session_state.datos = df
+                                    
+                                    st.success("✅ ¡Categorización automática completada!")
+                                    st.rerun()
+                        
+                        with col2:
+                            st.markdown("""
+                            **Alternativas manuales:**
+                            1. Usar el **Dataset de ejemplo** que ya tiene categorías
+                            2. Agregar documentos con **"Texto directo"** y seleccionar categorías
+                            """)
+                    
                     st.dataframe(df)
                     
                     # Estadísticas
@@ -190,13 +237,42 @@ def pagina_extraccion():
         with col1:
             titulo = st.text_input("Título del documento:")
         with col2:
-            categoria = st.selectbox("Categoría:", 
-                                    ["Tecnología", "Ciencia", "Deportes", "Política", "Otro"])
+            # Opción de categoría manual o automática
+            modo_categoria = st.radio(
+                "Modo de categoría:",
+                ["Manual", "Automática"],
+                horizontal=True,
+                help="Manual: Tú seleccionas la categoría. Automática: IA la detecta."
+            )
         
         texto = st.text_area("Contenido:", height=200)
         
+        # Mostrar selector de categoría solo si es manual
+        if modo_categoria == "Manual":
+            categoria = st.selectbox("Categoría:", 
+                                    ["Tecnología", "Ciencia", "Deportes", "Política", 
+                                     "Música", "Arte", "Literatura", "Cine", "Otro"])
+        else:
+            st.info("💡 La categoría se detectará automáticamente al agregar el documento")
+            categoria = None
+        
         if st.button("➕ Agregar Documento"):
             if titulo and texto:
+                # Si es automática, detectar la categoría
+                if modo_categoria == "Automática":
+                    with st.spinner("Detectando categoría..."):
+                        from categorizador_auto import CategorizadorAutomatico
+                        from preprocessing import PreprocesadorTexto
+                        
+                        prep = PreprocesadorTexto()
+                        texto_procesado = prep.procesar_texto(texto)
+                        
+                        categorizador = CategorizadorAutomatico()
+                        categoria_detectada, confianza = categorizador.detectar_categoria_por_keywords(texto_procesado)
+                        
+                        categoria = categoria_detectada
+                        st.success(f"✅ Categoría detectada: **{categoria}** (confianza: {confianza:.2f})")
+                
                 nuevo_doc = pd.DataFrame([{
                     'titulo': titulo,
                     'texto': texto,
@@ -285,7 +361,30 @@ def pagina_entrenamiento():
     
     # Verificar si hay columna de categorías
     if 'categoria' not in st.session_state.datos.columns:
-        st.error("❌ Los datos no tienen etiquetas de categoría. Usa el dataset de ejemplo o agrega categorías manualmente.")
+        st.error("""
+        ❌ **Los datos no tienen etiquetas de categoría**
+        
+        ### Para poder entrenar un modelo necesitas:
+        
+        **Opción 1: Usar el Dataset de Ejemplo**
+        - Ve a **"Extracción de Datos"**
+        - Selecciona **"Dataset de ejemplo"**
+        - Carga el dataset (tiene 9 documentos con 3 categorías)
+        
+        **Opción 2: Agregar Categorías Manualmente**
+        - Ve a **"Extracción de Datos"**
+        - Usa **"Texto directo"** para agregar documentos con categorías
+        
+        **Opción 3: Editar el CSV**
+        - Descarga los datos actuales
+        - Agrega una columna "categoria" en Excel
+        - Vuelve a cargar el archivo (implementación futura)
+        
+        **Opción 4: Usar Clustering (No Supervisado)**
+        - El clustering NO requiere categorías
+        - Agrupa documentos similares automáticamente
+        - (Implementación futura en esta app)
+        """)
         return
     
     st.divider()
@@ -326,8 +425,52 @@ def pagina_entrenamiento():
     if 'vectores' not in st.session_state:
         st.info("ℹ️ Primero procesa los textos usando el botón de arriba")
     else:
-        test_size = st.slider("Porcentaje de datos para prueba:", 
-                             min_value=10, max_value=40, value=20, step=5) / 100
+        # Calcular límites apropiados según el tamaño del dataset
+        n_samples = len(st.session_state.datos)
+        n_classes = st.session_state.datos['categoria'].nunique()
+        
+        # Información sobre el dataset
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("📊 Total Muestras", n_samples)
+        with col2:
+            st.metric("🏷️ Categorías", n_classes)
+        with col3:
+            min_per_class = st.session_state.datos['categoria'].value_counts().min()
+            st.metric("📉 Mínimo/Categoría", min_per_class)
+        
+        # Advertencias para datasets pequeños
+        if n_samples < 15:
+            st.warning(f"""
+            ⚠️ **Dataset pequeño detectado ({n_samples} muestras)**
+            
+            Para mejores resultados:
+            - Se recomienda al menos 15-20 documentos
+            - Mínimo 3-5 ejemplos por categoría
+            - Considera agregar más datos
+            """)
+        
+        # Ajustar límites del slider
+        if n_samples < 10:
+            max_test = 40
+            default_test = 30
+            st.info("ℹ️ Usando 30% para test debido al tamaño pequeño del dataset")
+        else:
+            max_test = 40
+            default_test = 20
+        
+        test_size = st.slider(
+            "Porcentaje de datos para prueba:", 
+            min_value=10, 
+            max_value=max_test, 
+            value=default_test, 
+            step=5,
+            help="""
+            - 10-20%: Recomendado para datasets grandes (>100 muestras)
+            - 20-30%: Recomendado para datasets medianos (20-100 muestras)
+            - 30-40%: Recomendado para datasets pequeños (<20 muestras)
+            """
+        ) / 100
         
         if st.button("🚀 Entrenar Modelo"):
             with st.spinner("Entrenando modelo..."):

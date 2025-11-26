@@ -40,10 +40,34 @@ class ModeloAprendizajeWeb:
         """
         print("🤖 Entrenando clasificador...")
         
+        # Calcular el tamaño mínimo necesario por clase
+        n_samples = X.shape[0]
+        n_classes = len(np.unique(y))
+        min_samples_per_class = np.min(np.unique(y, return_counts=True)[1])
+        
+        # Ajustar test_size si es necesario para datasets pequeños
+        # Necesitamos al menos 1 muestra por clase en test
+        min_test_samples = n_classes
+        adjusted_test_size = max(min_test_samples / n_samples, test_size)
+        
+        # Si el dataset es muy pequeño, usar stratify=None
+        # Stratify requiere al menos 2 muestras por clase
+        use_stratify = min_samples_per_class >= 2 and n_samples >= n_classes * 4
+        
+        if not use_stratify:
+            print(f"⚠️ Dataset pequeño detectado ({n_samples} muestras, {n_classes} clases)")
+            print(f"   Entrenando sin estratificación para evitar errores")
+        
         # Dividir datos
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
-        )
+        if use_stratify:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, random_state=42, stratify=y
+            )
+        else:
+            # Para datasets muy pequeños, usar split simple
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=adjusted_test_size, random_state=42
+            )
         
         # Entrenar modelo (Naive Bayes Multinomial)
         self.modelo_clasificacion = MultinomialNB()
@@ -273,4 +297,4 @@ if __name__ == "__main__":
     print(f"   Asignaciones: {metricas_cluster['clusters']}")
     
     # Guardar modelo
-    modelo.guardar_modelo('../models/clasificador_ejemplo.pkl')
+    modelo.guardar_modelo('models/clasificador_ejemplo.pkl')
