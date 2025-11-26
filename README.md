@@ -55,13 +55,11 @@ Sistema completo que combina **Web Scraping**, **Procesamiento de Lenguaje Natur
 ## 📁 Estructura del Proyecto
 
 ```
-proyecto_aprendizaje_web/
+aprendizaje_web/
 │
 ├── 📄 requirements.txt           # Dependencias del proyecto
 ├── 📄 README.md                  # Este archivo
-├── 📄 GUIA_EJECUCION.md         # Guía detallada paso a paso
 ├── 📄 MARCO_TEORICO.md          # Fundamentos teóricos
-├── 📄 GUION_VIDEO.md            # Guión para video de presentación
 │
 ├── 📂 data/                      # Datos del proyecto
 │   ├── 📂 raw/                   # Datos crudos extraídos
@@ -92,7 +90,7 @@ proyecto_aprendizaje_web/
 ### 2. Clonar o Descargar el Proyecto
 ```bash
 # Si usas Git:
-git clone [URL_DEL_REPOSITORIO]
+git clone americadabeiba/aprendizaje_web
 cd proyecto_aprendizaje_web
 
 # Si descargaste un ZIP:
@@ -102,12 +100,12 @@ cd proyecto_aprendizaje_web
 ### 3. Crear Entorno Virtual (Recomendado)
 ```powershell
 # Windows
-python -m venv venv_aprendizaje_web
-venv_aprendizaje_web\Scripts\activate
+python -m venv aprendizaje_web
+aprendizaje_web\Scripts\activate
 
 # macOS/Linux
-python3 -m venv venv_aprendizaje_web
-source venv_aprendizaje_web/bin/activate
+python3 -m venv aprendizaje_web
+source aprendizaje_web/bin/activate
 ```
 
 ### 4. Instalar Dependencias
@@ -341,9 +339,7 @@ open('archivo.txt', 'r', encoding='utf-8')
 
 ## 📚 Documentación Adicional
 
-- 📖 [GUIA_EJECUCION.md](GUIA_EJECUCION.md) - Instrucciones detalladas paso a paso
 - 📖 [MARCO_TEORICO.md](MARCO_TEORICO.md) - Fundamentos teóricos completos
-- 📖 [GUION_VIDEO.md](GUION_VIDEO.md) - Guía para grabar video de presentación
 
 ---
 
@@ -355,9 +351,10 @@ open('archivo.txt', 'r', encoding='utf-8')
 
 ## 👨‍💻 Autor
 
-[Tu Nombre]  
-[Tu Email]  
-[LinkedIn/GitHub] (opcional)
+América Dabeiba Buitrago Olazo
+americabuitragoolazo@gmail.com
+www.linkedin.com/in/americadabeiba
+www.github.com/americadabeiba
 
 ---
 
@@ -396,8 +393,7 @@ Posibles extensiones del proyecto:
 
 Si tienes preguntas o sugerencias:
 - Abre un issue en GitHub
-- Envía un email a [tu-email]
-- Conecta en [LinkedIn/otra red]
+- Envía un email a americabuitragoolazo@gmail.com
 
 ---
 
