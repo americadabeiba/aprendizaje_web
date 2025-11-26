@@ -351,10 +351,10 @@ open('archivo.txt', 'r', encoding='utf-8')
 
 ## 👨‍💻 Autor
 
-América Dabeiba Buitrago Olazo
-americabuitragoolazo@gmail.com
-www.linkedin.com/in/americadabeiba
-www.github.com/americadabeiba
+- América Dabeiba Buitrago Olazo
+- americabuitragoolazo@gmail.com
+- www.linkedin.com/in/americadabeiba
+- www.github.com/americadabeiba
 
 ---
 
@@ -436,4 +436,4 @@ Si tienes preguntas o sugerencias:
 
 **¡Gracias por usar este proyecto! 🚀**
 
-_Última actualización: Noviembre 2024_
+_Última actualización: Noviembre 2025_
